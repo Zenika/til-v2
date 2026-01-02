@@ -1,0 +1,526 @@
+openapi: 3.0.4
+info:
+  title: Today I Learned v2
+  description: Today I Learned is a news-sharing system designed around tags.
+  version: "2.0.0"
+servers:
+  - url: https://api-til.kube.znk.io
+tags:
+  - name: posts
+    description: Show & manage posts
+  - name: bookmarks
+    description: Show & manage user's bookmarks
+  - name: users
+    description: User management
+  - name: authentication
+    description: Authentication endpoints
+  - name: miscellaneous
+    description: Various endpoints that doesn't fit anywhere
+paths:
+  /configuration:
+    get:
+      tags:
+        - miscellaneous
+      summary: get public configuration
+      description: get public configuration
+      responses:
+        '200':
+          description: Configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+  /auth:
+    get:
+      tags:
+        - authentication
+      summary: Log-in using a Google Authentication Token
+      description: Log-in using a Google Authentication Token
+      parameters:
+        - name: code
+          in: query
+          description: OAuth2 code
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: Authentication state
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Authentication succeeded
+          headers:
+            Authorization:
+              description: "Token to use"
+              schema:
+                type: string
+        '400':
+          description: Authentication failed
+  /renew:
+    get:
+      tags:
+        - authentication
+      summary: Renew existing token
+      description: Generate a new token from the existing one to avoid disconnection
+      security:
+        - authorization: []
+      responses:
+        '204':
+          description: Renewal succeeded
+          headers:
+            Authorization:
+              description: "Token to use"
+              schema:
+                type: string
+        '400':
+          description: Authentication failed
+
+  /tags:
+    get:
+      tags:
+        - miscellaneous
+      summary : List all tags
+      description: Get all existing tags to allow typeahead
+      security:
+        - authorization: []
+      responses:
+        '200':
+          description: Tag list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /rss:
+    get:
+      tags:
+        - miscellaneous
+      summary: Generate RSS feed for user
+      description: Generates a Atom 2.0 RSS feed.
+      parameters:
+        - name: key
+          in: query
+          description: RSS Feed key
+          required: true
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: A list of tags, comma-separated
+          required: false
+          schema:
+            type: string
+            example: tag1,tag2
+      responses:
+        '200':
+          description: A Atom 2.0 RSS Feed
+        '401':
+          description: The provided token is invalid.
+
+  /posts/stream:
+    get:
+      tags:
+        - posts
+      summary: Get real-time updates
+      description: Get real-time updates for posts, in a standardized Server-Sent Event format.
+      security:
+        - authorization: [ ]
+      responses:
+        '200':
+          description: Continuous buffer for new information
+
+  /posts:
+    get:
+      tags:
+        - posts
+      summary: List posts
+      description: Get a list of post. A list of post is always paginated.
+      security:
+        - authorization: []
+      parameters:
+        - name: tags
+          in: query
+          description: A list of tags, comma-separated
+          required: false
+          schema:
+            type: string
+            example: tag1,tag2
+        - name: page
+          in: query
+          description: The page to retrieve (starts at 0)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: The number of items to retrieve (max is 100)
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A page of posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostPaginate'
+    post:
+      tags:
+        - posts
+      summary: Create a post
+      description: Create a post. The content field is limited to 180 characters.
+      security:
+        - authorization: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostCreation"
+      responses:
+        '204':
+          description: Created
+        '400':
+          description: Invalid request.
+  /posts/{id}:
+    get:
+      tags:
+        - posts
+      summary: Get a specific post
+      description: Get a specific post
+      security:
+        - authorization: []
+      parameters:
+        - name: id
+          in: path
+          description: The post id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The required post.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+    delete:
+      tags:
+        - posts
+      summary: Delete a post
+      description: Delete a post (User must have admin right)
+      security:
+        - authorization: []
+      parameters:
+        - name: id
+          in: path
+          description: The post id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: The post have been deleted.
+
+  /bookmarks:
+    get:
+      tags:
+        - bookmarks
+      summary: Retrieve all user's bookmarks
+      description: Get all bookmarks for the current user.
+      security:
+        - authorization: []
+      responses:
+        '200':
+          description: A list of posts which are bookmarked
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+  /bookmarks/{postId}:
+    put:
+      tags:
+        - bookmarks
+      summary: Add a bookmark to the user
+      description: Add a bookmark to the user.
+      parameters:
+        - name: postId
+          in: path
+          description: The post id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - authorization: []
+      responses:
+        '204':
+          description: Bookmark added
+        '409':
+          description: This post is already bookmarked!
+    delete:
+      tags:
+        - bookmarks
+      summary: Remove a bookmark to the user
+      description: Remove a bookmark to the user.
+      parameters:
+        - name: postId
+          in: path
+          description: The post id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - authorization: []
+      responses:
+        '204':
+          description: Bookmark removed
+
+  /users:
+    get:
+      tags:
+        - users
+      summary: List all users
+      description: List all users. The result is always paginated; and the user must be admin to see users.
+      security:
+        - authorization: []
+      parameters:
+        - name: page
+          in: query
+          description: The page to retrieve (starts at 0)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: The number of items to retrieve (max is 100)
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A page of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPaginate'
+
+  /users/{id}:
+    get:
+      tags:
+        - users
+      summary: Get a user
+      description: Get a specific user. If the user tries to get a user that is not himself, he must be admin. The keywork "self" is accepted to retrieve yourself.
+      security:
+        - authorization: []
+      parameters:
+        - name: id
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      tags:
+        - users
+      summary: Delete a user
+      description: Delete a user. If the user tries to get a user that is not himself, he must be admin. The keywork "self" is accepted to retrieve yourself.
+      security:
+        - authorization: []
+      parameters:
+        - name: id
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User deleted
+
+    put:
+      tags:
+        - users
+      summary: Update details of an user.
+      description: Update a user. If the user tries to get a user that is not himself, he must be admin. The keywork "self" is accepted to retrieve yourself.
+      security:
+        - authorization: []
+      parameters:
+        - name: id
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        '204':
+          description: User updated
+
+  /users/{id}/renew:
+    put:
+      tags:
+        - users
+      summary: Renew feed key
+      description: Renew feed key. If the user tries to get a user that is not himself, he must be admin. The keywork "self" is accepted to retrieve yourself.
+      security:
+        - authorization: []
+      parameters:
+        - name: id
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User feed key regenerated
+
+components:
+  schemas:
+    Configuration:
+      type: object
+      properties:
+        google_id:
+          type: string
+    PostPaginate:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        total_items:
+          type: integer
+        items_per_page:
+          type: integer
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+    UserPaginate:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        total_items:
+          type: integer
+        items_per_page:
+          type: integer
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+    PostCreation:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        link:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        creation_date:
+          type: string
+          format: date
+        user:
+          $ref: '#/components/schemas/UserMinimal'
+        title:
+          type: string
+        content:
+          type: string
+        link:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    UserUpdate:
+      type: object
+      properties:
+        display_name:
+          type: string
+        is_admin:
+          type: boolean
+        automatic_tags_filter:
+          type: array
+          items:
+            type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        google_id:
+          type: string
+        is_admin:
+          type: boolean
+        favorite_posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+        automatic_tags_filter:
+          type: array
+          items:
+            type: string
+        feed_key:
+          type: string
+    UserMinimal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+  securitySchemes:
+    authorization:
+      type: apiKey
+      name: Authorization
+      in: header
+
+
+

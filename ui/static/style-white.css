@@ -1,0 +1,43 @@
+html, body {
+    background: #ccc;
+    color: #333;
+}
+
+nav.main {
+    background: #eee;
+}
+
+nav.main ul li a:hover {
+    background: #ddd;
+}
+
+nav.main ul li select:hover, nav.main ul li select:active {
+    background: #ddd;
+}
+
+input, textarea, select, button, .svelte-tags-input, .svelte-tags-input-layout {
+    background: #ddd !important;
+    color: #222 !important;
+}
+
+.svelte-tags-input-tag {
+    background: #fff !important;
+    color: #222 !important;
+}
+
+label {
+    background: #fff !important;
+}
+
+
+.card {
+    background: #ddd !important;
+}
+
+.tag {
+    background: #bbb !important;
+}
+
+.svelte-tags-input-matchs-parent > ul {
+    background: #fafafa !important;
+}

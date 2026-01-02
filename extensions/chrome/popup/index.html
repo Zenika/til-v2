@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+
+<div class="content">
+
+    <div id="login-page">
+        <h3>Log in to TiL</h3>
+        <form id="login-form">
+            <input type="text" name="server_url" id="server_url" required placeholder="Server URL (https://til.zenika.com)"/>
+            <br/>
+            <input type="password" name="feed_key" id="feed_key" required placeholder="Feed Key (get it from your profile page)"/>
+            <br/>
+            <input type="submit" value="Login"/>
+        </form>
+    </div>
+
+    <div id="add-content" class="hidden">
+        <div style="text-align: right">
+            <button id="logout-button" style="width: unset">Logout</button>
+        </div>
+
+        <h3>Publish content</h3>
+        <form id="add-content-form">
+            <input type="text" name="title" id="title" required placeholder="Title"/>
+            <input type="text" name="link" id="link" required placeholder="URL"/>
+            <input type="text" name="tags" id="tags" placeholder="Tags (comma separated)"/>
+            <select name="lang" id="lang" required >
+                <option value="fr" selected>🇫🇷</option>
+                <option value="en">🇬🇧</option>
+            </select>
+            <textarea name="content" placeholder="Additional comment" id="content" maxlength="180"></textarea>
+            <input type="submit" value="Publish content"/>
+        </form>
+        <br />
+    </div>
+</div>
+
+<div id="message">
+    <p></p>
+</div>
+
+<script src="til.js"></script>
+</body>
+</html>

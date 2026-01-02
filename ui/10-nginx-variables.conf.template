@@ -1,0 +1,3 @@
+map $host $server_url {
+    default "$PUBLIC_TIL_SERVER_URL";
+}

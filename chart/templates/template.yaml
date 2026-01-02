@@ -1,0 +1,140 @@
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: "{{ .Values.app_name }}"
+  labels:
+    zenika/stack: "{{ .Values.app_name }}"
+    zenika/origin: internal
+  annotations:
+    zenika.repourl: https://github.com/Zenika/til-v2
+stringData:
+  TIL_JWT_SECRET: "{{ .Values.jwt_secret }}"
+  TIL_GOOGLE_CLIENT_ID: "{{ .Values.google.client_id }}"
+  TIL_GOOGLE_CLIENT_SECRET: "{{ .Values.google.client_secret }}"
+  TIL_DEFAULT_ADMIN: "{{ .Values.google.default_admin_id }}"
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: "{{ .Values.app_name }}"
+  labels:
+    zenika/stack: "{{ .Values.app_name }}"
+    zenika/origin: internal
+  annotations:
+    zenika.repourl: https://github.com/Zenika/til-v2
+spec:
+  subdomain: "{{ .Values.app_name }}"
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: "{{ .Values.app_name }}"
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: "{{ .Values.app_name }}"
+  labels:
+    zenika/stack: "{{ .Values.app_name }}"
+    zenika/origin: internal
+  annotations:
+    zenika.repourl: https://github.com/Zenika/til-v2
+spec:
+  rules:
+    - host: "{{ .Values.app_name }}.{{ .Values.base_domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Values.app_name }}"
+                port:
+                  number: 8000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ .Values.app_name }}"
+  labels:
+    zenika/stack: "{{ .Values.app_name }}"
+    zenika/origin: internal
+  annotations:
+    zenika.repourl: https://github.com/Zenika/til-v2
+spec:
+  selector:
+    zenika/stack: "{{ .Values.app_name }}"
+  ports:
+    - name: main
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: "{{ .Values.app_name }}"
+  labels:
+    zenika/stack: "{{ .Values.app_name }}"
+    zenika/origin: internal
+  annotations:
+    zenika.repourl: https://github.com/Zenika/til-v2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G
+  storageClassName: "ocs-storagecluster-cephfs"
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: "{{ .Values.app_name }}"
+  labels:
+    zenika/stack: "{{ .Values.app_name }}"
+    zenika/origin: internal
+  annotations:
+    zenika.repourl: https://github.com/Zenika/til-v2
+spec:
+  replicas: 1
+  minReadySeconds: 60
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      zenika/stack: "{{ .Values.app_name }}"
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        zenika/stack: "{{ .Values.app_name }}"
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: "{{ .Values.app_name }}"
+      containers:
+        - name: til
+          image: "{{ .Values.image }}"
+          volumeMounts:
+            - name: data
+              mountPath: /database
+          env:
+            - name: TIL_DATABASE_FILE_NAME
+              value: "/database/db.sqlite"
+          envFrom:
+            - secretRef:
+                name: "{{ .Values.app_name }}"
+          ports:
+            - name: main
+              containerPort: 8000
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 300
+            periodSeconds: 30
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 5

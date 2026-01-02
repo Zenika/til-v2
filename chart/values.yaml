@@ -1,0 +1,4 @@
+---
+app_name: til
+base_domain: "apps.ocp4.zenika.tech"
+image: "europe-west1-docker.pkg.dev/til-v2/til/til:latest"

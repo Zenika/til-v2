@@ -1,0 +1,15 @@
+---
+apiVersion: v2
+name: today-i-learn
+description: A Helm for Today I Learned.
+home: https://zenika.com/
+
+type: application
+
+version: 0.1.0
+
+appVersion: 1.0.0
+
+maintainers:
+  - name: Zenika
+    url: https://www.zenika.com

@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+html,
+body {
+    width: 250px;
+    background: #333;
+    color: #fafafa;
+    font-family: 'Roboto', sans-serif;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+form {
+    width: 100%;
+}
+
+.content {
+    padding: 5px;
+}
+
+input, input[type="submit"], button, textarea {
+    color: #fafafa;
+    background: #333;
+    border: 1px solid #666;
+    padding: 5px;
+    margin: 2px 0;
+    width: calc(100% - 12px);
+    transition-duration: 0.5s;
+}
+
+select {
+    color: #fafafa !important;
+    background: #333 !important;
+    border: 1px solid #666 !important;
+    padding: 5px !important;
+    margin: 2px 0 !important;
+    width: calc(100% ) !important;
+    transition-duration: 0.5s !important;
+}
+
+input[type="submit"], button {
+    width: 100%
+}
+
+input[type="submit"]:hover, button:hover {
+    background: rgb(246, 65, 84);
+    cursor: pointer;
+    border-color: rgb(193, 31, 48);
+}
+
+#message {
+    padding: 5px;
+}
+
+.info {
+    background: #2d6fc8;
+}
+
+.success {
+    background: #4caf50;
+}
+
+.error {
+    background: #f44336;
+}
